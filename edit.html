@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Edit & Delete Panel</title>
+  <style>
+    :root{ --bg:#f6f7fb; --card:#fff; --text:#111; --muted:#666; --border:#e8e8ef; --danger:#b00020; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); }
+    .wrap{ max-width:1100px; margin:24px auto; padding:0 16px; }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:0 8px 24px rgba(0,0,0,.04); }
+    h1{ margin:0 0 12px; }
+    h2{ margin:0 0 12px; }
+    .muted{ color:var(--muted); }
+    .tiny{ font-size:12px; }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    button{ border:0; border-radius:12px; padding:10px 14px; background:#111; color:#fff; cursor:pointer; }
+    button.secondary{ background:#e9e9ef; color:#111; }
+    button.danger{ background:var(--danger); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+    input, textarea, select{
+      width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px;
+      border:1px solid var(--border); outline:none; background:#fff;
+    }
+    textarea{ min-height:84px; resize:vertical; }
+    .grid{ display:grid; gap:12px; grid-template-columns: 1fr 1fr 1fr; }
+    .grid2{ display:grid; gap:12px; grid-template-columns: 1fr 1fr; }
+    .row{ display:flex; gap:10px; align-items:center; }
+    .row > *{ flex:1; }
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fafafe; }
+    .hr{ height:1px; background:var(--border); margin:14px 0; }
+    .pickList{ border:1px solid var(--border); border-radius:14px; padding:8px; min-height:140px; background:#fff; overflow:auto; }
+    .pickItem{ padding:10px 10px; border-radius:12px; cursor:pointer; }
+    .pickItem:hover{ background:#f3f4ff; }
+    .pickItem.active{ background:#eaf0ff; outline:1px solid #9bb6ff; }
+    .testList{ border:1px solid var(--border); border-radius:14px; padding:10px; min-height:140px; background:#fff; overflow:auto; }
+    .testCard{ border:1px solid var(--border); border-radius:14px; padding:10px; margin-bottom:10px; }
+    .testCardTitle{ font-weight:700; }
+    .testCardPath{ color:var(--muted); font-size:12px; margin-top:4px; }
+    .testCardActions{ display:flex; gap:8px; margin-top:10px; }
+    .qRow{ display:grid; gap:10px; grid-template-columns: 150px 1fr 140px; align-items:center; padding:10px; border:1px solid var(--border); border-radius:14px; }
+    .qimg{ width:150px; height:90px; object-fit:cover; border-radius:12px; border:1px solid var(--border); background:#fff; }
+    .warn{ background:#fff3f5; border:1px solid #ffd0d6; padding:10px 12px; border-radius:14px; color:#8a1026; }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>Edit & Delete Panel 🛠️</h1>
+  <p class="muted">Bu sayfa sadece yönetim içindir. Admin değilsen butonlar kilitli olur.</p>
+
+  <div class="card topbar" style="margin-bottom:14px;">
+    <div>
+      <div class="muted tiny">Durum</div>
+      <div id="userInfo">Giriş yapılmadı.</div>
+    </div>
+    <div class="row" style="flex:0 0 auto;">
+      <button id="loginBtn">Google ile Giriş</button>
+      <button id="logoutBtn" class="secondary" disabled>Çıkış</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Seçim (Ders → Konu → Test)</h2>
+    <div class="grid">
+      <div>
+        <label>Ders</label>
+        <input id="lessonSearch" placeholder="Ders ara" />
+        <div id="lessonList" class="pickList"></div>
+
+        <div class="hr"></div>
+        <label>Rename Ders</label>
+        <div class="row">
+          <input id="renameLesson" placeholder="Yeni ders adı" />
+          <button id="renameLessonBtn" disabled style="flex:0 0 auto;">Kaydet</button>
+        </div>
+
+        <div style="margin-top:8px;">
+          <button id="deleteLessonBtn" class="danger" disabled>Dersi Sil (Cascade)</button>
+        </div>
+      </div>
+
+      <div>
+        <label>Konu</label>
+        <input id="topicSearch" placeholder="Konu ara" />
+        <div id="topicList" class="pickList"></div>
+
+        <div class="hr"></div>
+        <label>Rename Konu</label>
+        <div class="row">
+          <input id="renameTopic" placeholder="Yeni konu adı" />
+          <button id="renameTopicBtn" disabled style="flex:0 0 auto;">Kaydet</button>
+        </div>
+
+        <div style="margin-top:8px;">
+          <button id="deleteTopicBtn" class="danger" disabled>Konuyu Sil (Cascade)</button>
+        </div>
+      </div>
+
+      <div>
+        <label>Test</label>
+        <input id="testSearch" placeholder="Test ara" />
+        <div id="testList" class="testList"></div>
+
+        <div class="hr"></div>
+        <label>Rename Test</label>
+        <div class="row">
+          <input id="renameTest" placeholder="Yeni test adı" />
+          <button id="renameTestBtn" disabled style="flex:0 0 auto;">Kaydet</button>
+        </div>
+
+        <div style="margin-top:8px;">
+          <button id="deleteTestBtn" class="danger" disabled>Testi Sil (Sorularıyla)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="pill" id="selectedPath">Seçili: -</div>
+    <div class="muted tiny" id="countsInfo" style="margin-top:6px;">-</div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <h2>Seçili Testin Soruları</h2>
+    <p class="muted tiny">Her bir soruyu tek tek silebilirsin. Silince Storage’daki görsel de silinir.</p>
+    <div id="questionsBox" class="muted">Test seçince sorular burada listelenecek.</div>
+  </div>
+
+  <div class="warn" style="margin-top:14px;">
+    <b>Dikkat:</b> Silme işlemleri geri alınamaz. “Ders sil” tüm alt konuları + testleri + soruları + resimleri kaldırır.
+  </div>
+</div>
+
+<script type="module">
+  import { ADMIN_EMAIL, firebaseConfig } from "./config.js";
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import {
+    getFirestore, collection, getDocs, query, where, deleteDoc, doc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+  import {
+    getStorage, ref, deleteObject
+  } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  const $ = (id) => document.getElementById(id);
+
+  let user = null;
+  const isAdmin = () => user && user.email === ADMIN_EMAIL;
+
+  // Data
+  let categories = [];
+  let quizzes = [];
+  let questions = [];
+
+  // Selection
+  let lessonId = "";
+  let topicId = "";
+  let quizId = "";
+
+  function esc(str){
+    return (str || "").replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  function catPath(catId){
+    const cat = categories.find(c=>c.id===catId);
+    if(!cat) return "";
+    const chain=[];
+    let cur=cat;
+    while(cur){
+      chain.unshift(cur.name);
+      cur = cur.parentId ? categories.find(x=>x.id===cur.parentId) : null;
+      if(cur && chain.length>30) break;
+    }
+    return chain.join(" / ");
+  }
+
+  function getRootCategories(){ return categories.filter(c=>!c.parentId); }
+  function getDirectChildren(pid){ return categories.filter(c=>c.parentId===pid); }
+
+  function getCategoryDescendants(rootId){
+    const out=[];
+    const st=[rootId];
+    while(st.length){
+      const id=st.pop();
+      out.push(id);
+      categories.filter(c=>c.parentId===id).forEach(k=>st.push(k.id));
+    }
+    return out;
+  }
+
+  async function refreshAll(){
+    categories = [];
+    const cs = await getDocs(collection(db,"categories"));
+    cs.forEach(d=>{
+      const x=d.data();
+      categories.push({id:d.id, name:x.name, parentId:x.parentId||null});
+    });
+
+    quizzes = [];
+    const qs = await getDocs(collection(db,"quizzes"));
+    qs.forEach(d=>{
+      const x=d.data();
+      quizzes.push({id:d.id, title:x.title, categoryId:x.categoryId});
+    });
+
+    questions = [];
+    const qns = await getDocs(collection(db,"questions"));
+    qns.forEach(d=>{
+      const x=d.data();
+      questions.push({
+        id:d.id, quizId:x.quizId,
+        correct:x.correct, imageUrl:x.imageUrl,
+        storagePath:x.storagePath||"", explain:x.explain||""
+      });
+    });
+
+    render();
+  }
+
+  function render(){
+    renderLesson();
+    renderTopic();
+    renderTests();
+    renderSelectedInfo();
+    renderQuestions();
+    enableButtons();
+  }
+
+  function enableButtons(){
+    const admin = isAdmin();
+    $("renameLessonBtn").disabled = !(admin && lessonId);
+    $("deleteLessonBtn").disabled = !(admin && lessonId);
+
+    $("renameTopicBtn").disabled = !(admin && topicId);
+    $("deleteTopicBtn").disabled = !(admin && topicId);
+
+    $("renameTestBtn").disabled = !(admin && quizId);
+    $("deleteTestBtn").disabled = !(admin && quizId);
+  }
+
+  function renderLesson(){
+    const q = ($("lessonSearch").value||"").trim().toLowerCase();
+    let list = getRootCategories();
+    if(q) list = list.filter(c=>c.name.toLowerCase().includes(q));
+
+    if(!lessonId && list.length) lessonId = list[0].id;
+    if(lessonId && !list.find(x=>x.id===lessonId)){
+      lessonId = list.length ? list[0].id : "";
+      topicId=""; quizId="";
+    }
+
+    $("lessonList").innerHTML = list.length ? list.map(c=>`
+      <div class="pickItem ${c.id===lessonId?"active":""}" data-lesson="${c.id}">
+        ${esc(c.name)}
+      </div>
+    `).join("") : `<div class="muted tiny">Ders yok.</div>`;
+
+    $("lessonList").querySelectorAll("[data-lesson]").forEach(el=>{
+      el.onclick = ()=>{
+        lessonId = el.dataset.lesson;
+        topicId=""; quizId="";
+        $("renameLesson").value="";
+        render();
+      };
+    });
+  }
+
+  function renderTopic(){
+    const q = ($("topicSearch").value||"").trim().toLowerCase();
+    let list = lessonId ? getDirectChildren(lessonId) : [];
+    if(q) list = list.filter(c=>catPath(c.id).toLowerCase().includes(q));
+
+    if(!topicId && list.length) topicId = list[0].id;
+    if(topicId && !list.find(x=>x.id===topicId)){
+      topicId = list.length ? list[0].id : "";
+      quizId="";
+    }
+
+    $("topicList").innerHTML = list.length ? list.map(c=>`
+      <div class="pickItem ${c.id===topicId?"active":""}" data-topic="${c.id}">
+        ${esc(c.name)}
+        <div class="muted tiny">${esc(catPath(c.id))}</div>
+      </div>
+    `).join("") : `<div class="muted tiny">Konu yok.</div>`;
+
+    $("topicList").querySelectorAll("[data-topic]").forEach(el=>{
+      el.onclick = ()=>{
+        topicId = el.dataset.topic;
+        quizId="";
+        $("renameTopic").value="";
+        render();
+      };
+    });
+  }
+
+  function renderTests(){
+    const q = ($("testSearch").value||"").trim().toLowerCase();
+    let list = topicId ? quizzes.filter(z=>z.categoryId===topicId) : [];
+    if(q) list = list.filter(z=>z.title.toLowerCase().includes(q));
+
+    if(!quizId && list.length) quizId = list[0].id;
+    if(quizId && !list.find(x=>x.id===quizId)){
+      quizId = list.length ? list[0].id : "";
+    }
+
+    $("testList").innerHTML = list.length ? list.map(z=>`
+      <div class="testCard">
+        <div class="testCardTitle">${esc(z.title)}</div>
+        <div class="testCardPath">${esc(catPath(z.categoryId))}</div>
+        <div class="testCardActions">
+          <button class="secondary" data-pick="${z.id}">Seç</button>
+        </div>
+      </div>
+    `).join("") : `<div class="muted tiny">Bu konu için test yok.</div>`;
+
+    $("testList").querySelectorAll("[data-pick]").forEach(b=>{
+      b.onclick = ()=>{
+        quizId = b.dataset.pick;
+        $("renameTest").value="";
+        renderSelectedInfo();
+        renderQuestions();
+        enableButtons();
+      };
+    });
+  }
+
+  function renderSelectedInfo(){
+    let path = "-";
+    if(quizId){
+      const z = quizzes.find(x=>x.id===quizId);
+      path = z ? `${catPath(z.categoryId)} / ${z.title}` : "-";
+    } else if(topicId){
+      path = catPath(topicId);
+    } else if(lessonId){
+      path = catPath(lessonId);
+    }
+    $("selectedPath").textContent = `Seçili: ${path}`;
+
+    // Counts
+    const lessonTopics = lessonId ? getDirectChildren(lessonId) : [];
+    const topicTests = topicId ? quizzes.filter(z=>z.categoryId===topicId) : [];
+    const testQuestions = quizId ? questions.filter(q=>q.quizId===quizId) : [];
+
+    $("countsInfo").textContent =
+      `Ders konuları: ${lessonTopics.length} | Konu testleri: ${topicTests.length} | Test soruları: ${testQuestions.length}`;
+  }
+
+  function renderQuestions(){
+    if(!quizId){
+      $("questionsBox").innerHTML = `<div class="muted">Test seçince sorular listelenecek.</div>`;
+      return;
+    }
+    const qs = questions.filter(q=>q.quizId===quizId);
+    if(qs.length===0){
+      $("questionsBox").innerHTML = `<div class="muted">Bu testte soru yok.</div>`;
+      return;
+    }
+
+    const admin = isAdmin();
+    $("questionsBox").innerHTML = qs.map((q, idx)=>`
+      <div class="qRow">
+        <img class="qimg" src="${q.imageUrl}" alt="q" />
+        <div>
+          <div><b>Soru ${idx+1}</b> <span class="pill">Doğru: ${esc(q.correct)}</span></div>
+          ${q.explain ? `<div class="muted tiny" style="margin-top:6px;">${esc(q.explain)}</div>` : `<div class="muted tiny" style="margin-top:6px;">Açıklama yok</div>`}
+          <div class="muted tiny" style="margin-top:6px;">Doc: ${esc(q.id)}</div>
+        </div>
+        <div>
+          <button class="danger" data-delq="${q.id}" ${admin ? "" : "disabled"}>Soruyu Sil</button>
+        </div>
+      </div>
+    `).join("");
+
+    $("questionsBox").querySelectorAll("[data-delq]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        if(!isAdmin()) return alert("Sadece admin.");
+        const qid = btn.dataset.delq;
+        const item = questions.find(x=>x.id===qid);
+        if(!item) return;
+
+        if(!confirm("Bu soruyu silmek istiyor musun? (Geri alınamaz)")) return;
+
+        // delete storage image
+        if(item.storagePath){
+          try { await deleteObject(ref(storage, item.storagePath)); } catch(_) {}
+        }
+        await deleteDoc(doc(db,"questions", qid));
+        await refreshAll();
+      };
+    });
+  }
+
+  // ---------- Cascade delete helpers ----------
+  async function deleteQuizCascade(id){
+    const z = quizzes.find(x=>x.id===id);
+    const label = z ? `${catPath(z.categoryId)} / ${z.title}` : id;
+    if(!confirm(`Test silinsin mi?\n\n${label}\n\n(Sorular ve resimler de silinir)`)) return;
+
+    const qs = questions.filter(q=>q.quizId===id);
+    for(const q of qs){
+      if(q.storagePath){
+        try { await deleteObject(ref(storage, q.storagePath)); } catch(_) {}
+      }
+      await deleteDoc(doc(db,"questions", q.id));
+    }
+    await deleteDoc(doc(db,"quizzes", id));
+  }
+
+  async function deleteTopicCascade(id){
+    const label = catPath(id);
+    const catIds = getCategoryDescendants(id);
+    const quizIds = quizzes.filter(z=>catIds.includes(z.categoryId)).map(z=>z.id);
+    const qCount = questions.filter(q=>quizIds.includes(q.quizId)).length;
+
+    if(!confirm(`Konu silinsin mi?\n\n${label}\n\nTest: ${quizIds.length}\nSoru: ${qCount}\n\n(Resimler de silinir)`)) return;
+
+    for(const zid of quizIds){
+      // delete questions + images
+      const qs = questions.filter(q=>q.quizId===zid);
+      for(const q of qs){
+        if(q.storagePath){
+          try { await deleteObject(ref(storage, q.storagePath)); } catch(_) {}
+        }
+        await deleteDoc(doc(db,"questions", q.id));
+      }
+      await deleteDoc(doc(db,"quizzes", zid));
+    }
+
+    for(const cid of [...catIds].reverse()){
+      await deleteDoc(doc(db,"categories", cid));
+    }
+  }
+
+  async function deleteLessonCascade(id){
+    const label = catPath(id);
+    const catIds = getCategoryDescendants(id);
+    const quizIds = quizzes.filter(z=>catIds.includes(z.categoryId)).map(z=>z.id);
+    const qCount = questions.filter(q=>quizIds.includes(q.quizId)).length;
+
+    if(!confirm(`Ders silinsin mi?\n\n${label}\n\nAlt kategori: ${catIds.length}\nTest: ${quizIds.length}\nSoru: ${qCount}\n\n(Resimler de silinir)`)) return;
+
+    for(const zid of quizIds){
+      const qs = questions.filter(q=>q.quizId===zid);
+      for(const q of qs){
+        if(q.storagePath){
+          try { await deleteObject(ref(storage, q.storagePath)); } catch(_) {}
+        }
+        await deleteDoc(doc(db,"questions", q.id));
+      }
+      await deleteDoc(doc(db,"quizzes", zid));
+    }
+
+    for(const cid of [...catIds].reverse()){
+      await deleteDoc(doc(db,"categories", cid));
+    }
+  }
+
+  // ---------- Rename handlers ----------
+  $("renameLessonBtn").onclick = async ()=>{
+    if(!isAdmin()) return alert("Sadece admin.");
+    if(!lessonId) return;
+    const name = $("renameLesson").value.trim();
+    if(!name) return alert("Yeni isim boş olamaz.");
+    await updateDoc(doc(db,"categories", lessonId), { name });
+    $("renameLesson").value="";
+    await refreshAll();
+  };
+
+  $("renameTopicBtn").onclick = async ()=>{
+    if(!isAdmin()) return alert("Sadece admin.");
+    if(!topicId) return;
+    const name = $("renameTopic").value.trim();
+    if(!name) return alert("Yeni isim boş olamaz.");
+    await updateDoc(doc(db,"categories", topicId), { name });
+    $("renameTopic").value="";
+    await refreshAll();
+  };
+
+  $("renameTestBtn").onclick = async ()=>{
+    if(!isAdmin()) return alert("Sadece admin.");
+    if(!quizId) return;
+    const title = $("renameTest").value.trim();
+    if(!title) return alert("Yeni isim boş olamaz.");
+    await updateDoc(doc(db,"quizzes", quizId), { title });
+    $("renameTest").value="";
+    await refreshAll();
+  };
+
+  // ---------- Delete handlers ----------
+  $("deleteTestBtn").onclick = async ()=>{
+    if(!isAdmin()) return alert("Sadece admin.");
+    if(!quizId) return;
+    await deleteQuizCascade(quizId);
+    quizId="";
+    await refreshAll();
+  };
+
+  $("deleteTopicBtn").onclick = async ()=>{
+    if(!isAdmin()) return alert("Sadece admin.");
+    if(!topicId) return;
+    await deleteTopicCascade(topicId);
+    topicId=""; quizId="";
+    await refreshAll();
+  };
+
+  $("deleteLessonBtn").onclick = async ()=>{
+    if(!isAdmin()) return alert("Sadece admin.");
+    if(!lessonId) return;
+    await deleteLessonCascade(lessonId);
+    lessonId=""; topicId=""; quizId="";
+    await refreshAll();
+  };
+
+  // Search inputs
+  ["lessonSearch","topicSearch","testSearch"].forEach(id=>{
+    $(id).addEventListener("input", ()=> render());
+  });
+
+  // Auth buttons
+  $("loginBtn").onclick = async ()=>{
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  };
+  $("logoutBtn").onclick = async ()=>{ await signOut(auth); };
+
+  onAuthStateChanged(auth, async (u)=>{
+    user = u;
+    if(!u){
+      $("userInfo").textContent = "Giriş yapılmadı.";
+      $("loginBtn").disabled = false;
+      $("logoutBtn").disabled = true;
+      $("questionsBox").innerHTML = `<div class="muted">Giriş yapınca yönetim açılır.</div>`;
+      enableButtons();
+      return;
+    }
+    $("userInfo").textContent = `Giriş: ${u.displayName||""} (${u.email}) ${isAdmin() ? "✅ Admin" : "👀 Öğrenci"}`;
+    $("loginBtn").disabled = true;
+    $("logoutBtn").disabled = false;
+    await refreshAll();
+  });
+</script>
+</body>
+</html>

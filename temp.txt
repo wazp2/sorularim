@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Soru Bankası (Firebase + Google)</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>📚 Soru Bankası <span class="muted tiny">(Firebase + Google giriş)</span></h1>
+
+    <div class="topbar card">
+      <div class="topbar-left">
+        <div class="muted tiny">Durum</div>
+        <div id="userInfo">Giriş yapılmadı.</div>
+      </div>
+
+      <div class="topbar-right">
+        <button id="loginBtn">Google ile Giriş</button>
+        <button id="logoutBtn" class="secondary" disabled>Çıkış</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="cats">Kategoriler & Testler</div>
+      <div class="tab" data-tab="questions">Soru Ekle</div>
+      <div class="tab" data-tab="solve">Çöz</div>
+    </div>
+
+    <!-- CATEGORIES & QUIZZES -->
+    <div id="cats" class="panel">
+      <div class="card">
+        <h2>Kategori Oluştur</h2>
+        <small class="muted">Örn: Coğrafya → İklim Tipleri</small>
+
+        <div class="row">
+          <div>
+            <label>Üst Kategori (opsiyonel)</label>
+            <select id="catParent"></select>
+          </div>
+          <div>
+            <label>Yeni Kategori Adı</label>
+            <input id="catName" placeholder="İklim Tipleri">
+          </div>
+        </div>
+
+        <button id="addCategory" disabled>Kategori Ekle</button>
+
+        <div class="hr"></div>
+        <div id="catList"></div>
+      </div>
+
+      <div class="card">
+        <h2>Test Oluştur</h2>
+
+        <div class="row">
+          <div>
+            <label>Hangi Kategoriye?</label>
+            <select id="quizCategory"></select>
+          </div>
+          <div>
+            <label>Test Adı</label>
+            <input id="quizTitle" placeholder="Engin Test 1">
+          </div>
+        </div>
+
+        <button id="addQuiz" disabled>Test Ekle</button>
+
+        <div class="hr"></div>
+        <div id="quizList"></div>
+      </div>
+    </div>
+
+    <!-- QUESTIONS -->
+    <div id="questions" class="panel" style="display:none">
+      <div class="card">
+        <h2>Soru Ekle</h2>
+        <small class="muted">Şıklar görselin içinde: sadece görsel (Ctrl+V) + doğru şık seç.</small>
+
+        <div class="row">
+          <div>
+            <label>Test Seç</label>
+            <select id="questionQuiz"></select>
+          </div>
+          <div>
+            <label>Doğru Şık</label>
+            <div class="radioRow">
+              <label><input type="radio" name="correct" value="A"> A</label>
+              <label><input type="radio" name="correct" value="B"> B</label>
+              <label><input type="radio" name="correct" value="C"> C</label>
+              <label><input type="radio" name="correct" value="D"> D</label>
+              <label><input type="radio" name="correct" value="E"> E</label>
+            </div>
+          </div>
+        </div>
+
+        <label>Ctrl+V ile Görsel Yapıştır (anında upload)</label>
+        <div id="pasteBox" class="pasteBox" tabindex="0">
+          Buraya tıkla ve Ctrl+V yap. (Ekran görüntüsü / kopyalanmış resim)
+        </div>
+
+        <p id="uploadStatus" class="muted tiny"></p>
+        <img id="pastePreview" class="qimg" style="display:none" alt="önizleme">
+
+        <label>Açıklama (opsiyonel)</label>
+        <textarea id="explain" placeholder="Çözüm / ipucu / kısa not"></textarea>
+
+        <button id="addQuestion" disabled>Soruyu Kaydet</button>
+
+        <div class="hr"></div>
+        <div id="questionList"></div>
+
+        <div class="hr"></div>
+        <button id="deleteSelectedQuiz" class="danger" disabled>Seçili Testi Sil (Sorularıyla)</button>
+        <p class="muted tiny">Silme yetkisi sadece admin’de olmalı (Rules tarafında da).</p>
+      </div>
+    </div>
+
+    <!-- SOLVE -->
+    <div id="solve" class="panel" style="display:none">
+      <div class="card">
+        <h2>Test Seç ve Çöz</h2>
+
+        <div class="solveGrid">
+          <div class="solveCol">
+            <label>Ders</label>
+            <input id="lessonSearch" placeholder="Ders ara (örn: coğ)" />
+            <div id="lessonList" class="pickList"></div>
+          </div>
+
+          <div class="solveCol">
+            <label>Konu</label>
+            <input id="topicSearch" placeholder="Konu ara (örn: iklim)" />
+            <div id="topicList" class="pickList"></div>
+          </div>
+
+          <div class="solveCol">
+            <label>Test</label>
+            <input id="testSearch" placeholder="Test ara (örn: klasik)" />
+            <div id="testList" class="testList"></div>
+          </div>
+        </div>
+
+        <div class="inline">
+          <label class="muted tiny">
+            <input type="checkbox" id="lockAfterAnswer" checked>
+            Şık seçince kilitle
+          </label>
+
+          <label class="muted tiny">
+            <input type="checkbox" id="showCorrectOnWrong" checked>
+            Yanlışsa doğruyu göster
+          </label>
+        </div>
+
+        <button id="startSolve" disabled>Başlat</button>
+
+        <div class="hr"></div>
+        <div class="scorebox">
+          <div class="scorepill" id="scoreInfo">Skor: 0 / 0</div>
+          <div class="scorepill" id="progressInfo">İlerleme: -</div>
+        </div>
+      </div>
+
+      <div id="solveArea"></div>
+    </div>
+
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
+
